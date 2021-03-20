@@ -20,6 +20,7 @@ public class World implements IRenderable {
 		this.program = new ShaderProgram("world/world");
 		this.program.createUniform("sampler");
 		this.model = StaticModel.basicModel;
+		this.loaded = true;
 	}
 	
 	@Override

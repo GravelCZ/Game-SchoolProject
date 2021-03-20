@@ -21,7 +21,6 @@ import java.io.FileInputStream;
 import java.nio.FloatBuffer;
 
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
 import org.lwjgl.system.MemoryUtil;
 
 import cz.vesely.game.client.render.ShaderProgram;
@@ -39,6 +38,8 @@ public class TextRenderer {
 	
 	private int vaoId, vboId;
 	
+	private float scale = 1f;
+	
 	private Matrix4f projection;
 	
 	public void init() throws Exception 
@@ -47,6 +48,7 @@ public class TextRenderer {
 		this.f = new Font(f);
 		p = new ShaderProgram("text/text");
 		p.createUniform("sampler");
+		p.createUniform("scale");
 		p.createUniform("projection");
 		
 		vaoId = glGenVertexArrays();
@@ -76,8 +78,13 @@ public class TextRenderer {
 		
 		numVert = 0;
 	}
-
-	public void setProjection(Matrix4f projection) {
+	
+	public void setScale(float scale) {
+		this.scale = scale;
+	}
+	
+	public void setProjection(Matrix4f projection) 
+	{
 		this.projection = projection;
 	}
 	
@@ -89,10 +96,8 @@ public class TextRenderer {
 		
 		p.bind();
 		p.setUniform("sampler", 0);
-		
-		Matrix4f m = new Matrix4f().scale(0.1f).translate(new Vector3f(-50f, 0f, 0f));
-		
-		p.setUniform("projection", projection.mul(m, new Matrix4f()));
+		p.setUniform("scale", this.scale);
+		p.setUniform("projection", this.projection);
 		
 		glBindVertexArray(vaoId);
 		glBindBuffer(GL_ARRAY_BUFFER, vboId);
@@ -160,17 +165,15 @@ public class TextRenderer {
         for (int i = 0; i < text.length(); i++) {
             char ch = text.charAt(i);
             if (ch == '\n') {
-                /* Line feed, set x and y to draw at the next line */
                 drawY -= f.getFontHeight();
                 drawX = x;
                 continue;
             }
             if (ch == '\r') {
-                /* Carriage return, just skip it */
                 continue;
             }
             Glyph g = f.getGlyphs().get(ch);
-            //renderer.drawTextureRegion(texture, drawX, drawY, g.x, g.y, g.width, g.height, c);
+            
             drawCalculateRegion(drawX, drawY, g.x, g.y, g.w, g.h);
             drawX += g.w;
         }

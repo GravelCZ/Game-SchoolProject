@@ -7,6 +7,9 @@ public class Camera {
 
 	private Vector3f position;
 	private Matrix4f projection;
+	private Matrix4f invertedProjection;
+	
+	private int width, height;
 	
 	public Camera() 
 	{
@@ -20,7 +23,26 @@ public class Camera {
 	
 	public void calculateProjection(Window w)
 	{
-		this.projection = new Matrix4f().ortho2D(-w.getWidth() / 2f, w.getWidth() / 2f, -w.getHeight() / 2f, w.getHeight() / 2f).scale(80f);
+		this.width = w.getWidth();
+		this.height = w.getHeight();
+		this.projection = new Matrix4f().ortho2D(-w.getWidth() / 2f, w.getWidth() / 2f, -w.getHeight() / 2f, w.getHeight() / 2f).scale(40f);
+		this.invertedProjection = this.projection.invertOrtho(new Matrix4f());
+	}
+	
+	public int getHeight() {
+		return height;
+	}
+	
+	public int getWidth() {
+		return width;
+	}
+	
+	public Vector3f getPosition() {
+		return position;
+	}
+	
+	public Matrix4f getInvertedProjection() {
+		return invertedProjection;
 	}
 	
 	public Matrix4f getProjection()
@@ -42,3 +64,4 @@ public class Camera {
 		this.position.z = z;
 	}
 }
+

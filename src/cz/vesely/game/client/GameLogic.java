@@ -22,73 +22,112 @@ public class GameLogic {
 	
 	private Camera camera;
 	
-	private Vector3f positionInc;
+	private int posIncX, posIncY;
 	
 	private List<GameObject> objects;
 	
-	//private GameState state = GameState.MENU;
+	private GameState state = GameState.LOGIN_MENU;
 	
 	private PlayerClient self;
 	private World world;
+	
+	private float mouseScreenX, mouseScreenY;
 	
 	public GameLogic() 
 	{
 		this.render = new GameRenderer();
 		this.camera = new Camera();
-		this.positionInc = new Vector3f();
 		
 		this.objects = new ArrayList<>();
 	}
 	
 	public void init(Window window, MouseInput input) throws Exception 
 	{
-		this.self = new PlayerClient("Test", new Vector3f());
-		render.init();
-		
+		render.init(window, this);
+		//this.render.setGUI(new LoginGUI());
+		this.self = new PlayerClient("", new Vector3f());
+		this.world = new World("textures/world1.png");
 	}
 
 	public void update(float interval) 
 	{
-		self.updatePosition(positionInc);
+		if (this.state == GameState.LOGIN_MENU) {
+			connectToServer("127.0.0.1", 6965);
+			this.state = GameState.GAME;
+		}
+		
+		self.updatePosition(posIncX, posIncY);
 		
 		self.update(interval);	
 		
 		
-		//camera.movePosition(positionInc.x * 0.05f, positionInc.y * 0.05f, 0);
 		// TODO: update heních objektů, a sítě
+	}
+
+	private void connectToServer(String addr, int port) 
+	{
+		
 	}
 
 	public void render(Window window) 
 	{
-		//this.world.render();	
-		
 		this.render.render(window, this);
 	}
 
 	public void input(Window window, MouseInput input) 
 	{
-		this.positionInc = new Vector3f(0);
+		this.posIncX = 0;
+		this.posIncY = 0;
 		if (window.isKeyPressed(GLFW_KEY_W)) {
-			positionInc.y = 1;
-		} else if (window.isKeyPressed(GLFW_KEY_S)) {
-			positionInc.y = -1;
+			posIncY = 1;
+		} 
+		if (window.isKeyPressed(GLFW_KEY_S)) {
+			posIncY = -1;
+		}
+		if (window.isKeyPressed(GLFW_KEY_A)) {
+			posIncX = -1;
+		}
+		if (window.isKeyPressed(GLFW_KEY_D)) {
+			posIncX = 1;
 		}
 
-		if (window.isKeyPressed(GLFW_KEY_A)) {
-			positionInc.x = -1;
-		} else if (window.isKeyPressed(GLFW_KEY_D)) {
-			positionInc.x = 1;
+		if (input.isInWindow()) {
+			float sx = (float) (input.getCurrPos().x / window.getWidth());
+			float sy = (float) (input.getCurrPos().y / window.getHeight());
+			
+			//System.out.println(sx + " : " + -sy);
+			
+			this.mouseScreenX = sx;
+			this.mouseScreenY = sy;
+			
+			//Vector4f positionInWorldSpace = new Vector4f(sx * 2.0f - 1f, sy * -2f + 1f, 0f, 1f).mul(camera.getInvertedProjection());
+			
+			
 		}
-		
-		
 	}
 
 	public void cleanUp() 
 	{
 		this.render.cleanUp();
 		objects.forEach(GameObject::cleanUp);
-		//self.cleanUp();
-		//world.cleanUp();
+		if (this.self != null) {
+			this.self.cleanUp();
+		}
+		if (this.world != null) {
+			this.world.cleanUp();
+		}
+	}
+	
+	public float getMouseScreenX() {
+		return mouseScreenX;
+	}
+	
+	public float getMouseScreenY() {
+		return mouseScreenY;
+	}
+	
+	public GameState getState() {
+		return state;
 	}
 	
 	public Camera getCamera() {
@@ -101,6 +140,10 @@ public class GameLogic {
 
 	public PlayerClient getSelfPlayer() {
 		return this.self;
+	}
+
+	public World getWorld() {
+		return this.world;
 	}
 
 	

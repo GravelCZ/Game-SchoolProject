@@ -59,6 +59,10 @@ public class MouseInput {
 		prevPos.y = currPos.y;
 	}
 	
+	public boolean isInWindow() {
+		return inWindow;
+	}
+	
 	public boolean leftPressed() {
 		return this.leftPressed;
 	}

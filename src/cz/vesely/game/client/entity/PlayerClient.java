@@ -1,6 +1,14 @@
 package cz.vesely.game.client.entity;
 
+import java.util.EnumMap;
+
+import org.joml.Vector2f;
 import org.joml.Vector3f;
+
+import cz.vesely.game.client.render.StaticModel;
+import cz.vesely.game.common.AABB;
+import cz.vesely.rpg.player.Ruka;
+import cz.vesely.rpg.player.Zbran;
 
 public class PlayerClient extends GameObject {
 
@@ -9,13 +17,26 @@ public class PlayerClient extends GameObject {
 	private int strengthDefence;
 	private int health;
 	
-	private float cameraStep = 0.05f;
+	private float moveStep = 0.03f;
+	
+	private String name;
 	
 	private Vector3f lastPosition;
-	private Vector3f updatePosition;
+	private int updatePosX, updatePosY;
+	
+	private EnumMap<Ruka, Zbran> inventory;
+	
+	private boolean facingLeft = false;
+	
+	private AABB aabb;
 	
 	public PlayerClient(String name, Vector3f position) throws Exception {
-		super(name, position, 1f, "panacek.png");
+		super(position, 0.4f, "textures/player.png");
+		this.name = name;
+		
+		inventory = new EnumMap<>(Ruka.class);
+		this.model = StaticModel.playerModel;
+		this.aabb = new AABB(new Vector2f(this.position.x, this.position.y), new Vector2f(1, 2));
 	}
 
 	@Override
@@ -23,15 +44,22 @@ public class PlayerClient extends GameObject {
 	{
 		this.lastPosition = position;
 		
-		this.position.add(updatePosition.mul(cameraStep));
-		this.updatePosition = new Vector3f(0f);
-		
-		
+		this.facingLeft = updatePosX == -1;
+		this.position.add(updatePosX * moveStep, updatePosY * moveStep, 0);
+		this.updatePosX = 0;
+		this.updatePosY = 0;
 	}
 
-	public void updatePosition(Vector3f positionInc) 
+	@Override
+	public void render() {
+		getProgram().setUniform("flip", this.facingLeft ? 1 : 0);
+		super.render();
+	}
+	
+	public void updatePosition(int x, int y) 
 	{
-		this.updatePosition = positionInc;
+		this.updatePosX = x;
+		this.updatePosY = y;
 	}
 	
 	

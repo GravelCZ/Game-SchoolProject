@@ -2,6 +2,7 @@ package cz.vesely.game.client.render;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -63,10 +64,19 @@ public class Window {
         			glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         		}
         	}
-        	if (key == GLFW_KEY_P && mod == GLFW_MOD_SHIFT) {
-        		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        	} else if (key == GLFW_KEY_O && mod == GLFW_MOD_SHIFT) {
-        		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        	
+        	if (mod == GLFW_MOD_SHIFT) {
+        		if (key == GLFW_KEY_P) {
+        			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);	
+        		} else if (key == GLFW_KEY_O) {
+        			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);	
+        		}
+        		
+        		if (key == GLFW_KEY_J) {
+        			glEnable(GL_MULTISAMPLE);
+        		} else if (key == GLFW_KEY_K) {
+        			glDisable(GL_MULTISAMPLE);
+        		}
         	}
         });
         
@@ -86,13 +96,10 @@ public class Window {
         
         GL.createCapabilities();
         
-        glClearColor(1.0f, 1.0f, 1.0f, 0f);
+        setClearColor(0f, 0f, 0f, 0f);
         
-//        glEnable(GL_DEPTH_TEST);
-//        glEnable(GL_MULTISAMPLE);
-        
-//        glEnable(GL_CULL_FACE);
-//        glEnable(GL_FRONT);
+        //glEnable(GL_CULL_FACE);
+        //glEnable(GL_FRONT);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}

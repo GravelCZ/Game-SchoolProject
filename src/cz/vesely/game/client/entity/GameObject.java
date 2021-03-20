@@ -11,20 +11,20 @@ import cz.vesely.game.client.render.Texture;
 
 public abstract class GameObject implements IRenderable {
 
-	private Model model;
+	protected Model model;
 	private Texture texture;
 	private ShaderProgram program;
 	
 	protected Vector3f position;
 	private float scale;
 	
-	public GameObject(String name, Vector3f position, float scale, String texture) throws Exception {
+	public GameObject(Vector3f position, float scale, String texture) throws Exception {
 		this.program = new ShaderProgram("main");
 		
 		this.program.createUniform("sampler");
 		this.program.createUniform("projection");
 		this.program.createUniform("position");
-		
+		this.program.createUniform("flip");
 		this.texture = new Texture(texture);
 		
 		this.model = StaticModel.basicModel;
