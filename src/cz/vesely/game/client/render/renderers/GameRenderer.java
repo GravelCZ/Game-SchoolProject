@@ -1,9 +1,6 @@
 package cz.vesely.game.client.render.renderers;
 
-import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
-import static org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT;
-import static org.lwjgl.opengl.GL11.glClear;
-import static org.lwjgl.opengl.GL11.glViewport;
+import static org.lwjgl.opengl.GL11.*;
 
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
@@ -22,118 +19,111 @@ public class GameRenderer {
 
 	private GuiRenderer guiRender;
 	private TextRenderer textRenderer;
-	
-	public void init(Window window, GameLogic logic) throws Exception
-	{
-		if (window.isResized()) {
-			glViewport(0, 0, window.getWidth(), window.getHeight());
-			logic.getCamera().calculateProjection(window);
-			window.setResized(false);
-		}
-		
+
+	public GameRenderer() {
 		guiRender = new GuiRenderer();
 		textRenderer = new TextRenderer();
+	}
+
+	public void init(Window window, GameLogic logic) throws Exception {
+		checkWindowResized(window, logic);
 		textRenderer.init();
-		
+
 		Tesselator.createNewInstance();
 	}
-	
-	public void render(Window window, GameLogic logic)
-	{
+
+	public void render(Window window, GameLogic logic) {
 		clear();
-		
-		if (window.isResized()) {
-			glViewport(0, 0, window.getWidth(), window.getHeight());
-			logic.getCamera().calculateProjection(window);
-			window.setResized(false);
-		}
-		
-		textRenderer.setProjection(logic.getCamera().getProjection());
-		
-		if (logic.getState() == GameState.LOGIN_MENU) {
-			//this.textRenderer.setProjection(logic.getCamera().getProjection());
-			
-			renderLoginMenu(logic);
+
+		checkWindowResized(window, logic);
+
+		Matrix4f projection = logic.getCamera().getProjection();
+
+		textRenderer.setProjection(projection);
+
+		if (logic.getState() == GameState.MENU) {
+			guiRender.renderGui(textRenderer, logic);
 		} else {
-			logic.getWorld().render();
+			logic.getWorld().render(projection);
 			renderGame(logic);
 		}
 	}
-	
-	private void renderGame(GameLogic logic) 
-	{	
+
+	private void renderGame(GameLogic logic) {
 		Matrix4f projection = logic.getCamera().getProjection();
-		
-		for (GameObject o : logic.getObjects())
-		{
+
+		for (GameObject o : logic.getObjects()) {
 			Matrix4f posAndScale = o.calculatePositionAndScale();
-			
+
 			ShaderProgram program = o.getProgram();
-			
+
 			program.bind();
-			program.setUniform("projection", projection);
 			program.setUniform("position", posAndScale);
 			program.setUniform("sampler", 0);
-			
+
 			o.getTexture().bind(0);
-			o.render();
-			
+			o.render(projection);
+
 			program.unbind();
 		}
+
 		
 		{
 			Matrix4f posAndScale = logic.getSelfPlayer().calculatePositionAndScale();
-			
+
 			ShaderProgram program = logic.getSelfPlayer().getProgram();
-			
+
 			program.bind();
-			program.setUniform("projection", projection);
 			program.setUniform("position", posAndScale);
 			program.setUniform("sampler", 0);
-			
+
 			logic.getSelfPlayer().getTexture().bind(0);
-			logic.getSelfPlayer().render();
-			
-			program.unbind();	
+			logic.getSelfPlayer().render(projection);
+
+			program.unbind();
 		}
-	
-		textRenderer.setScale(0.1f);
-		textRenderer.drawText("a", 0.5f, 0.5f);
+
+		textRenderer.setScale(0.05f);
+		textRenderer.drawText(logic.getSelfPlayer().getPosition().x + "," + logic.getSelfPlayer().getPosition().y, 0f, 0f);
 		
 		Tesselator tess = Tesselator.getInstance();
 		TesselatorRenderer tr = tess.getRenderer();
-		
+
 		tr.begin(GL11.GL_TRIANGLE_FAN, EnumRenderType.POS_COLOR, projection);
-		
+
 		tr.scale(4f);
-		tr.translate(1, 0, 0);
-		
-		tr.posColor(0, 0, 0f,     1f, 0f, 0f, 1f);
-		tr.posColor(1f, 0f, 0f,   0f, 1f, 0f, 0.5f);
-		tr.posColor(1f, 1f, 0f,   0f, 0f, 1f, 0.25f);
-		tr.posColor(0f, 1f, 0f,   1f, 1f, 1f, 0f);
+		tr.translate(0.5, 0.5, 0);
+
+		tr.posColor(0, 0, 0f, 1f, 0f, 0f, 1f);
+		tr.posColor(1f, 0f, 0f, 0f, 1f, 0f, 0.5f);
+		tr.posColor(1f, 1f, 0f, 0f, 0f, 1f, 0.25f);
+		tr.posColor(0f, 1f, 0f, 1f, 1f, 1f, 0f);
 		
 		tess.draw();
 	}
 
-	private void renderLoginMenu(GameLogic logic) 
-	{
-		guiRender.renderGui(textRenderer, logic);
+	private void checkWindowResized(Window window, GameLogic logic) {
+		if (window.isResized()) {
+			glViewport(0, 0, window.getWidth(), window.getHeight());
+			logic.getCamera().calculateProjection(window);
+			window.setResized(false);
+		}
 	}
 
-	public void setGUI(AbstractGui gui)
-	{
+	private void clear() {
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+
+	public void setGUI(AbstractGui gui) {
 		this.guiRender.setGui(gui);
 	}
-	
-	public void clear()
-	{
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	public GuiRenderer getGuiRender() {
+		return guiRender;
 	}
-	
-	public void cleanUp()
-	{
+
+	public void cleanUp() {
 		textRenderer.cleanup();
 	}
-	
+
 }

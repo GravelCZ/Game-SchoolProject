@@ -53,7 +53,7 @@ public class Font {
 
 		BufferedImage image = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g = image.createGraphics();
-		
+
 		for (int i = 32; i < 256; i++) {
 			if (i == 127) {
 				continue;
@@ -63,54 +63,49 @@ public class Font {
 			if (charImg == null) {
 				continue;
 			}
-			
+
 			int charWidth = charImg.getWidth();
 			int charHeight = charImg.getHeight();
 
 			Glyph gl = new Glyph(charWidth, charHeight, x, image.getHeight() - charHeight);
-			
+
 			g.drawImage(charImg, x, 0, null);
-			
+
 			x += gl.w;
 			glyphs.put(c, gl);
 		}
-		
+
 		// Otočí texturu tak, aby měla začátek dole vlevo
-		
+
 		AffineTransform transform = AffineTransform.getScaleInstance(1f, -1f);
-		transform.translate(0, -image.getHeight()); 
-		AffineTransformOp operation = new AffineTransformOp(transform, AffineTransformOp.TYPE_NEAREST_NEIGHBOR); 
+		transform.translate(0, -image.getHeight());
+		AffineTransformOp operation = new AffineTransformOp(transform, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
 		image = operation.filter(image, null);
-		
+
 		int width = image.getWidth();
 		int height = image.getHeight();
 
-		/*try {
-			File out = new File("./out.png");
-			if (!out.exists()) {
-				out.createNewFile();
-			}
-			ImageIO.write(image, "png", out);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}*/
-		
+		/*
+		 * try { File out = new File("./out.png"); if (!out.exists()) {
+		 * out.createNewFile(); } ImageIO.write(image, "png", out); } catch (Exception
+		 * e) { e.printStackTrace(); }
+		 */
+
 		int[] pixels = new int[width * height];
-		//image.setRGB(0, 0, width, height, pixels, 0, width); // zkopíruje obsah image do pixels		
-		
-		for (int tx = 0; tx < width; tx++)
-		{
-			for (int y = 0; y < height; y++)
-			{
+		// image.setRGB(0, 0, width, height, pixels, 0, width); // zkopíruje obsah image
+		// do pixels
+
+		for (int tx = 0; tx < width; tx++) {
+			for (int y = 0; y < height; y++) {
 				pixels[y * width + tx] = image.getRGB(tx, y);
-			}	
+			}
 		}
-		
+
 		ByteBuffer buffer = MemoryUtil.memAlloc(width * height * 4);
 		for (int y = 0; y < height; y++) {
 			for (int tx = 0; tx < width; tx++) {
 				int pixel = pixels[y * width + tx];
-				
+
 				buffer.put((byte) ((pixel >> 16) & 0xFF));
 				buffer.put((byte) ((pixel >> 8) & 0xFF));
 				buffer.put((byte) (pixel & 0xFF));

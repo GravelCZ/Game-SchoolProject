@@ -1,16 +1,14 @@
-package cz.vesely.game.client.network;
+package cz.vesely.game.common.network;
 
 import java.io.IOException;
 
-import cz.vesely.game.common.network.NetInput;
 import io.netty.buffer.ByteBuf;
 
 public class ByteBufNetInput implements NetInput {
 
 	private ByteBuf buf;
-	
-	public ByteBufNetInput(ByteBuf buf) 
-	{
+
+	public ByteBufNetInput(ByteBuf buf) {
 		this.buf = buf;
 	}
 
@@ -40,13 +38,12 @@ public class ByteBufNetInput implements NetInput {
 		int size = 0;
 		int b;
 		while (((b = readByte()) & 0x80) == 0x80) {
-			value |= (b & 0x7F) << (size ++ * 7);
-			if (size > 5)
-			{
+			value |= (b & 0x7F) << (size++ * 7);
+			if (size > 5) {
 				throw new IOException("VarInt too long");
 			}
 		}
-		
+
 		return value | ((b & 0x7F) << (size * 7));
 	}
 
@@ -77,7 +74,7 @@ public class ByteBufNetInput implements NetInput {
 		if (len < 0) {
 			return null;
 		}
-		
+
 		byte[] b = new byte[len];
 		this.buf.readBytes(b);
 		return b;
@@ -94,15 +91,15 @@ public class ByteBufNetInput implements NetInput {
 		if (readable <= 0) {
 			return -1;
 		}
-		
+
 		if (readable < length) {
 			length = readable;
 		}
-		
+
 		this.buf.readBytes(b, offset, length);
 		return length;
 	}
-	
+
 	@Override
 	public String readString() throws IOException {
 		int len = readVarInt();
