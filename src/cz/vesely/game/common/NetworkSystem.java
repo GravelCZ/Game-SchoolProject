@@ -5,6 +5,8 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import cz.vesely.game.common.network.NetworkHandler;
 import cz.vesely.game.common.network.PacketCodec;
@@ -21,6 +23,8 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 
 public class NetworkSystem {
@@ -40,6 +44,9 @@ public class NetworkSystem {
 	
 	public void createServerEndpoint(InetSocketAddress address) throws IOException, InterruptedException
 	{
+		if (server != null) {
+			return;
+		}
 		server = new ServerBootstrap().channel(NioServerSocketChannel.class).childHandler(new ChannelInitializer<Channel>() {
 			
 			protected void initChannel(Channel ch) throws Exception {
@@ -59,14 +66,15 @@ public class NetworkSystem {
 					.addLast("handler", handler);
 				
 			};
-		}).option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000).group(GROUP).localAddress(address).bind().syncUninterruptibly().await();
+		}).group(GROUP).localAddress(address).bind().awaitUninterruptibly();
 	}
 	
 	public static NetworkHandler openChannel(InetSocketAddress address)
 	{
 		NetworkHandler handler = new NetworkHandler();
 		
-		new Bootstrap().channel(NioSocketChannel.class).handler(new ChannelInitializer<Channel>() {
+		Bootstrap b = new Bootstrap();
+		b.group(GROUP).channel(NioSocketChannel.class).handler(new ChannelInitializer<Channel>() {
 			
 			@Override
 			protected void initChannel(Channel ch) throws Exception 
@@ -76,13 +84,19 @@ public class NetworkSystem {
 				} catch (ChannelException e) {}
 				
 				ch.pipeline()
+					.addFirst(new LoggingHandler(LogLevel.DEBUG))
 					.addLast("timeout", new ReadTimeoutHandler(30))
 					.addLast("framer", new PacketSizer())
 					.addLast("codec", new PacketCodec())
 					.addLast("handler", handler);
 			}
-		}).group(GROUP).connect(address).syncUninterruptibly();
+		}).option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000);
 		
+		try {
+			ChannelFuture f = b.connect(address).syncUninterruptibly();
+		} catch (Throwable e) {
+			handler.exceptionCaught(null, e);
+		}
 		return handler;
 	}
 	

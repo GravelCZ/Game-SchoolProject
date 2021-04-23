@@ -7,7 +7,7 @@ import cz.vesely.game.common.network.server.PacketServerLoginResponse;
 import cz.vesely.game.common.network.server.PacketServerMap;
 import cz.vesely.game.common.network.server.PacketServerPlayer;
 import cz.vesely.game.common.network.server.PacketServerPlayerList;
-import cz.vesely.game.common.network.server.PacketServerPlayerPlayerPosition;
+import cz.vesely.game.common.network.server.PacketServerPlayerPosition;
 
 public interface INetHandlerClientLogin extends INetHandler {
 
@@ -21,7 +21,7 @@ public interface INetHandlerClientLogin extends INetHandler {
 
 	void handleMap(PacketServerMap packet);
 
-	void handleLoginPosition(PacketServerPlayerPlayerPosition packet);
+	void handleLoginPosition(PacketServerPlayerPosition packet);
 
 	void handlePlayerList(PacketServerPlayerList packetServerPlayerList);
 

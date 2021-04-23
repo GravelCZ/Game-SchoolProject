@@ -1,12 +1,12 @@
 package cz.vesely.game.client;
 
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_A;
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_D;
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_S;
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_W;
+import static org.lwjgl.glfw.GLFW.*;
 
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.joml.Vector3f;
 
@@ -14,10 +14,16 @@ import cz.vesely.game.client.entity.GameObject;
 import cz.vesely.game.client.entity.PlayerClient;
 import cz.vesely.game.client.gui.AbstractGui;
 import cz.vesely.game.client.gui.LoginGUI;
-import cz.vesely.game.client.network.ClientNetworkSession;
+import cz.vesely.game.client.network.ClientLoginListener;
 import cz.vesely.game.client.render.Camera;
 import cz.vesely.game.client.render.Window;
 import cz.vesely.game.client.render.renderers.GameRenderer;
+import cz.vesely.game.common.NetworkSystem;
+import cz.vesely.game.common.network.NetworkHandler;
+import cz.vesely.game.common.network.Protocol;
+import cz.vesely.game.common.network.client.PacketClientLogin;
+import io.netty.util.internal.logging.InternalLoggerFactory;
+import io.netty.util.internal.logging.Slf4JLoggerFactory;
 
 public class GameLogic {
 
@@ -38,9 +44,12 @@ public class GameLogic {
 
 	private final Window window;
 
-	private ClientNetworkSession s = new ClientNetworkSession();
+	private NetworkHandler handler;
+	private boolean connecting = false;
+	private boolean connected = false;
 	
 	public GameLogic(Window window) {
+		Logger.getLogger("io.netty").setLevel(Level.FINEST);
 		this.window = window;
 		this.render = new GameRenderer();
 		this.camera = new Camera();
@@ -58,18 +67,27 @@ public class GameLogic {
 
 	public void update(float interval) {
 		if (this.state == GameState.MENU) {
-			s.connect("127.0.0.1", 6930);
-			s.getHandler().checkDisconnected();
+			Protocol.init();
+			if (!connecting) {
+				InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
+				handler = NetworkSystem.openChannel(new InetSocketAddress("127.0.0.1", 6930));
+				handler.setPacketListener(new ClientLoginListener(this));
+				handler.sendPacket(new PacketClientLogin("GravelCZ", 1));
+				this.connecting = true;
+				this.connected = true;
+			}
 		} else if (this.state == GameState.GAME) {
 			self.updatePosition(posIncX, posIncY);
 
 			self.update(interval);
-
 		}
-
+		
+		if (this.connected) {
+			handler.networkTick();	
+		}
 		// TODO: update heních objektů, a sítě
 	}
-
+	
 	public void render() {
 		this.render.render(window, this);
 	}
@@ -111,6 +129,7 @@ public class GameLogic {
 	public void cleanUp() {
 		this.render.cleanUp();
 		objects.forEach(GameObject::cleanUp);
+		this.handler.disconnect("");
 		if (this.self != null) {
 			this.self.cleanUp();
 		}
@@ -156,6 +175,10 @@ public class GameLogic {
 
 	public World getWorld() {
 		return this.world;
+	}
+	
+	public void setConnected(boolean b) {
+		this.connected = b;
 	}
 
 }

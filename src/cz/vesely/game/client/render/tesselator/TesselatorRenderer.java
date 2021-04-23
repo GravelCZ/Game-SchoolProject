@@ -161,7 +161,10 @@ public class TesselatorRenderer {
 			draw();
 		}
 
-		posColorBuffer.put((float) (x + this.xOffset)).put((float) (y + this.yOffset)).put((float) (z + this.zOffset))
+		posColorBuffer
+				.put((float) (x + this.xOffset))
+				.put((float) (y + this.yOffset))
+				.put((float) (z + this.zOffset))
 				.put(r).put(g).put(b).put(a);
 
 		vertexCount++;

@@ -12,6 +12,7 @@ public class PacketCodec extends ByteToMessageCodec<Packet<INetHandler>> {
 	protected void encode(ChannelHandlerContext ctx, Packet<INetHandler> packet, ByteBuf buf) throws Exception {
 		NetOutput out = new ByteBufNetOutput(buf);
 		int id = Protocol.getOutgoingID(packet.getClass());
+		System.out.println("outgoing id: " + id);
 		out.writeByte(id);
 		packet.write(out);
 		out.writeByte(0x01);
@@ -28,7 +29,7 @@ public class PacketCodec extends ByteToMessageCodec<Packet<INetHandler>> {
 				buf.resetReaderIndex();
 				return;
 			}
-			Packet<INetHandler> packet = Protocol.createIncomingPacket(id);
+			Packet<?> packet = Protocol.createIncomingPacket(id);
 			packet.read(in);
 
 			byte end = in.readByte();

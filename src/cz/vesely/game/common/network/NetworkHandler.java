@@ -1,5 +1,8 @@
 package cz.vesely.game.common.network;
 
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -12,75 +15,88 @@ public class NetworkHandler extends SimpleChannelInboundHandler<Packet> {
 
 	private INetHandler packetListener;
 
-	private boolean disconnected;
+	private boolean disconnected = false;
+	private String closeReason;
 
-	private String closeMessage;
-
+	private Queue<Packet> packetsIn = new ConcurrentLinkedQueue<>();
+	private Queue<Packet> packetsOut = new ConcurrentLinkedQueue<>();
+	
 	@Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
-		super.channelActive(ctx);
-
 		this.channel = ctx.channel();
+		System.out.println("Connected");
 	}
 
 	@Override
 	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-		super.channelInactive(ctx);
+		if (ctx.channel() == this.channel) {
+			disconnect("Disconnected");
+		}
 	}
 
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, Packet msg) throws Exception {
 		if (this.channel.isOpen()) {
 			System.out.println("Recieved packet: " + msg.getClass().getName());
-			msg.processPacket(packetListener);
+			packetsIn.add(msg);
 		}
 	}
 
 	@Override
-	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+		String closeMessage;
 		if (cause instanceof TimeoutException) {
-			this.closeMessage = "Timed out";
+			closeMessage = "Timed out";
 		} else {
-			this.closeMessage = "Internal exception: " + cause.getMessage();
+			closeMessage = "Internal exception: " + cause.getMessage();
 		}
-		
-		this.closeChannel();
+
+		disconnect(closeMessage);
 	}
 
-	public void closeChannel() {
+	public void networkTick() {
+		if (this.disconnected) {
+			this.packetListener.onDisconnect(closeReason);
+			return;
+		}
 		if (this.channel != null && this.channel.isOpen()) {
-			this.channel.close().awaitUninterruptibly();
+			Packet packet;
+			while ((packet = packetsIn.poll()) != null) {
+				packet.processPacket(packetListener);
+			}
+			while ((packet = packetsOut.poll()) != null) {
+				this.channel.writeAndFlush(packet).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+				System.out.println("Sent queued packet: " + packet.getClass().getSimpleName());
+			}
 		}
 	}
 
 	public void sendPacket(Packet packetIn) {
-		if (this.channel != null && this.channel.isOpen()) {
-			this.channel.writeAndFlush(packetIn).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
-		}
-	}
-
-	public void checkDisconnected()
-	{
-		if (this.channel != null && !this.channel.isOpen())
-		{
-			if (!this.disconnected) {
-				this.disconnected = true;
-				
-				this.packetListener.onDisconnect(getCloseMessage());
+		if (this.channel != null) {
+			if (this.channel.isOpen()) {
+				this.channel.writeAndFlush(packetIn).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+				System.out.println("Sent packet: " + packetIn.getClass().getSimpleName());	
+			} else {
+				this.packetsOut.add(packetIn);
 			}
 		}
 	}
-	
-	public void setPacketListener(INetHandler packetListener) {
-		this.packetListener = packetListener;
-	}
-	
-	public void processPackets() {
-		this.channel.flush();
+
+	public void disconnect(String reason) {
+		if (this.disconnected) {
+			return;
+		}
+		
+		this.disconnected = true;
+		if (this.channel != null && this.channel.isOpen()) {
+			this.channel.flush().close();
+		}
+		
+		this.closeReason = reason;
 	}
 
-	public String getCloseMessage() {
-		return closeMessage;
+	public void setPacketListener(INetHandler packetListener) {
+		this.packetListener = packetListener;
 	}
 
 }
