@@ -1,10 +1,10 @@
 package cz.vesely.game.common.network.server;
 
-import java.io.IOException;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 import cz.vesely.game.common.PlayerLoginInformation;
-import cz.vesely.game.common.network.NetInput;
-import cz.vesely.game.common.network.NetOutput;
 import cz.vesely.game.common.network.Packet;
 import cz.vesely.game.common.network.handler.login.INetHandlerClientLogin;
 
@@ -20,30 +20,32 @@ public class PacketServerPlayer implements Packet<INetHandlerClientLogin> {
 	}
 
 	@Override
-	public void read(NetInput in) throws IOException {
-		int id = in.readInt();
-		int attack = in.readInt();
-		int defence = in.readInt();
-		int health = in.readInt();
-
-		this.player = new PlayerLoginInformation(id, attack, defence, health);
-	}
-
-	@Override
-	public void write(NetOutput out) throws IOException {
-		out.writeInt(player.getId());
-		out.writeInt(player.getAttack());
-		out.writeInt(player.getDefence());
-		out.writeInt(player.getHealth());
-	}
-
-	@Override
 	public void processPacket(INetHandlerClientLogin handler) {
 		handler.handlePlayerData(this);
 	}
 
 	public PlayerLoginInformation getPlayer() {
 		return player;
+	}
+
+	@Override
+	public void write(Kryo kryo, Output output) 
+	{
+		output.writeInt(player.getId());
+		output.writeInt(player.getAttack());
+		output.writeInt(player.getDefence());
+		output.writeInt(player.getHealth());
+	}
+
+	@Override
+	public void read(Kryo kryo, Input input) 
+	{
+		int id = input.readInt();
+		int attack = input.readInt();
+		int defence = input.readInt();
+		int health = input.readInt();
+		
+		player = new PlayerLoginInformation(id, attack, defence, health);
 	}
 
 }

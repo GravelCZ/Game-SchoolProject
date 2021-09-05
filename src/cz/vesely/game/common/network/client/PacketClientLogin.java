@@ -1,9 +1,9 @@
 package cz.vesely.game.common.network.client;
 
-import java.io.IOException;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
-import cz.vesely.game.common.network.NetInput;
-import cz.vesely.game.common.network.NetOutput;
 import cz.vesely.game.common.network.Packet;
 import cz.vesely.game.common.network.handler.login.INetHandlerServerLogin;
 
@@ -21,15 +21,16 @@ public class PacketClientLogin implements Packet<INetHandlerServerLogin> {
 	}
 
 	@Override
-	public void read(NetInput in) throws IOException {
-		this.name = in.readString();
-		this.version = in.readInt();
+	public void write(Kryo kryo, Output output) {
+		output.writeString(name);
+		output.writeInt(version);
 	}
 
 	@Override
-	public void write(NetOutput out) throws IOException {
-		out.writeString(name);
-		out.writeInt(version);
+	public void read(Kryo kryo, Input input) 
+	{
+		this.name = input.readString();
+		this.version = input.readInt();
 	}
 
 	@Override

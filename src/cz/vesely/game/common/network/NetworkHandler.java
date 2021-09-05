@@ -1,60 +1,37 @@
 package cz.vesely.game.common.network;
 
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import com.esotericsoftware.kryonet.Connection;
+import com.esotericsoftware.kryonet.Listener;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.timeout.TimeoutException;
+import cz.vesely.game.common.network.client.PacketClientLogin;
+import cz.vesely.game.common.network.server.PacketServerDisconnect;
 
-public class NetworkHandler extends SimpleChannelInboundHandler<Packet> {
-
-	private Channel channel;
+public class NetworkHandler extends Listener {
 
 	private INetHandler packetListener;
 
 	private boolean disconnected = false;
 	private String closeReason;
 
-	private Queue<Packet> packetsIn = new ConcurrentLinkedQueue<>();
-	private Queue<Packet> packetsOut = new ConcurrentLinkedQueue<>();
+	private Connection connection;
 	
 	@Override
-	public void channelActive(ChannelHandlerContext ctx) throws Exception {
-		this.channel = ctx.channel();
-		System.out.println("Connected");
+	public void connected(Connection connection) 
+	{
+		this.connection = connection;
 	}
-
+	
 	@Override
-	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-		if (ctx.channel() == this.channel) {
-			disconnect("Disconnected");
-		}
+	public void disconnected(Connection connection) {
+		
 	}
-
+	
 	@Override
-	protected void channelRead0(ChannelHandlerContext ctx, Packet msg) throws Exception {
-		if (this.channel.isOpen()) {
-			System.out.println("Recieved packet: " + msg.getClass().getName());
-			packetsIn.add(msg);
-		}
+	public void received(Connection connection, Object object) {
+		
 	}
-
-	@Override
-	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-		String closeMessage;
-		if (cause instanceof TimeoutException) {
-			closeMessage = "Timed out";
-		} else {
-			closeMessage = "Internal exception: " + cause.getMessage();
-		}
-
-		disconnect(closeMessage);
-	}
-
-	public void networkTick() {
+	
+	/*public void networkTick() {
 		if (this.disconnected) {
 			this.packetListener.onDisconnect(closeReason);
 			return;
@@ -93,10 +70,21 @@ public class NetworkHandler extends SimpleChannelInboundHandler<Packet> {
 		}
 		
 		this.closeReason = reason;
-	}
+	}*/
 
 	public void setPacketListener(INetHandler packetListener) {
 		this.packetListener = packetListener;
+	}
+
+	public void sendPacket(Packet packet) 
+	{
+		connection.sendTCP(packet);
+	}
+
+	public void disconnect(String string) 
+	{
+		connection.sendTCP(new PacketServerDisconnect(string));
+		connection.close();
 	}
 
 }

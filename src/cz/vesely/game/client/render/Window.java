@@ -101,6 +101,8 @@ public class Window implements GLFWCharCallbackI {
 
 		setClearColor(1f, 1f, 1f, 0f);
 
+		System.out.println(GL11.glGetString(GL_VERSION));
+		
 		// glEnable(GL_CULL_FACE);
 		// glEnable(GL_FRONT);
 		glEnable(GL_BLEND);

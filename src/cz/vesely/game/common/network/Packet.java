@@ -1,12 +1,8 @@
 package cz.vesely.game.common.network;
 
-import java.io.IOException;
+import com.esotericsoftware.kryo.KryoSerializable;
 
-public interface Packet<T extends INetHandler> {
-
-	public void read(NetInput in) throws IOException;
-
-	public void write(NetOutput out) throws IOException;
+public interface Packet<T extends INetHandler> extends KryoSerializable {
 
 	void processPacket(T handler);
 }

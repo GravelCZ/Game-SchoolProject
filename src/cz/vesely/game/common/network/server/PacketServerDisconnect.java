@@ -1,10 +1,10 @@
 package cz.vesely.game.common.network.server;
 
-import java.io.IOException;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 import cz.vesely.game.common.network.INetHandler;
-import cz.vesely.game.common.network.NetInput;
-import cz.vesely.game.common.network.NetOutput;
 import cz.vesely.game.common.network.Packet;
 
 public class PacketServerDisconnect implements Packet<INetHandler>  {
@@ -16,17 +16,17 @@ public class PacketServerDisconnect implements Packet<INetHandler>  {
 	public PacketServerDisconnect(String reason) {
 		this.reason = reason;
 	}
-	
+
 	@Override
-	public void read(NetInput in) throws IOException {
+	public void read(Kryo kryo, Input in) {
 		this.reason = in.readString();
 	}
-
+	
 	@Override
-	public void write(NetOutput out) throws IOException {
-		out.writeString(reason);
+	public void write(Kryo var1, Output var2) {
+		
 	}
-
+	
 	@Override
 	public void processPacket(INetHandler handler) {
 		handler.onDisconnect(getReason());

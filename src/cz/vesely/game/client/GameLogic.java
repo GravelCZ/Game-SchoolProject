@@ -1,6 +1,9 @@
 package cz.vesely.game.client;
 
-import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_A;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_D;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_S;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_W;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -22,8 +25,6 @@ import cz.vesely.game.common.NetworkSystem;
 import cz.vesely.game.common.network.NetworkHandler;
 import cz.vesely.game.common.network.Protocol;
 import cz.vesely.game.common.network.client.PacketClientLogin;
-import io.netty.util.internal.logging.InternalLoggerFactory;
-import io.netty.util.internal.logging.Slf4JLoggerFactory;
 
 public class GameLogic {
 
@@ -69,7 +70,6 @@ public class GameLogic {
 		if (this.state == GameState.MENU) {
 			Protocol.init();
 			if (!connecting) {
-				InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
 				handler = NetworkSystem.openChannel(new InetSocketAddress("127.0.0.1", 6930));
 				handler.setPacketListener(new ClientLoginListener(this));
 				handler.sendPacket(new PacketClientLogin("GravelCZ", 1));
@@ -83,7 +83,7 @@ public class GameLogic {
 		}
 		
 		if (this.connected) {
-			handler.networkTick();	
+			//handler.networkTick();	
 		}
 		// TODO: update heních objektů, a sítě
 	}

@@ -1,9 +1,9 @@
 package cz.vesely.game.common.network.server;
 
-import java.io.IOException;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
-import cz.vesely.game.common.network.NetInput;
-import cz.vesely.game.common.network.NetOutput;
 import cz.vesely.game.common.network.Packet;
 import cz.vesely.game.common.network.handler.login.INetHandlerClientLogin;
 
@@ -20,18 +20,6 @@ public class PacketServerInventory implements Packet<INetHandlerClientLogin> {
 	}
 
 	@Override
-	public void read(NetInput in) throws IOException {
-		this.leftHand = (byte) in.readUnsignedByte();
-		this.rightHand = (byte) in.readUnsignedByte();
-	}
-
-	@Override
-	public void write(NetOutput out) throws IOException {
-		out.writeByte(leftHand);
-		out.writeByte(rightHand);
-	}
-
-	@Override
 	public void processPacket(INetHandlerClientLogin handler) {
 		handler.handleInventory(this);
 	}
@@ -42,6 +30,20 @@ public class PacketServerInventory implements Packet<INetHandlerClientLogin> {
 
 	public byte getRightHand() {
 		return rightHand;
+	}
+
+	@Override
+	public void write(Kryo kryo, Output output) 
+	{
+		output.writeByte(leftHand);
+		output.writeByte(rightHand);
+	}
+
+	@Override
+	public void read(Kryo kryo, Input input) 
+	{
+		this.leftHand = input.readByte();
+		this.rightHand = input.readByte();
 	}
 
 }

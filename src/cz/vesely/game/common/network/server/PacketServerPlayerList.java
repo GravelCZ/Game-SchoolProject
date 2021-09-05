@@ -1,12 +1,13 @@
 package cz.vesely.game.common.network.server;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import cz.vesely.game.common.PlayerServerData;
-import cz.vesely.game.common.network.NetInput;
-import cz.vesely.game.common.network.NetOutput;
 import cz.vesely.game.common.network.Packet;
 import cz.vesely.game.common.network.handler.login.INetHandlerClientLogin;
 
@@ -20,37 +21,38 @@ public class PacketServerPlayerList implements Packet<INetHandlerClientLogin> {
 		this.players = players;
 	}
 	
+
 	@Override
-	public void read(NetInput in) throws IOException 
+	public void write(Kryo kryo, Output output) {
+		output.writeInt(players.size());
+		for (PlayerServerData ps : players)
+		{
+			output.writeInt(ps.getId());
+			output.writeString(ps.getName());
+			output.writeInt(ps.getHealth());
+			output.writeFloat(ps.getPosition().x);
+			output.writeFloat(ps.getPosition().y);
+		}
+	}
+
+	@Override
+	public void read(Kryo kryo, Input input) 
 	{
 		this.players = new ArrayList<>();
-		int len = in.readInt();
+		int len = input.readInt();
 		
 		for (int i = 0; i < len; i++)
 		{
-			int id = in.readInt();
-			String name = in.readString();
-			int health = in.readInt();
-			float x = in.readFloat();
-			float y = in.readFloat();
+			int id = input.readInt();
+			String name = input.readString();
+			int health = input.readInt();
+			float x = input.readFloat();
+			float y = input.readFloat();
 			
 			players.add(new PlayerServerData(id, name, health, x, y));
 		}
 	}
 
-	@Override
-	public void write(NetOutput out) throws IOException 
-	{
-		out.writeInt(players.size());
-		for (PlayerServerData ps : players)
-		{
-			out.writeInt(ps.getId());
-			out.writeString(ps.getName());
-			out.writeInt(ps.getHealth());
-			out.writeFloat(ps.getPosition().x);
-			out.writeFloat(ps.getPosition().y);
-		}
-	}
 
 	@Override
 	public void processPacket(INetHandlerClientLogin handler) 
